@@ -48,7 +48,16 @@ const QueueList = ({ patients }) => {
 
                             <div className="mt-4 p-3 bg-white/60 rounded-lg text-xs text-slate-500 border border-slate-200/50">
                                 <span className="font-semibold text-slate-700">Triage Reason: </span>
-                                {p.explanation || 'Standard evaluation'}
+                                {(() => {
+                                    let text = p.explanation || 'Standard evaluation';
+                                    // Strip unwanted prefix from legacy data
+                                    text = text.replace(/ML Model \(Random Forest\) Assessment:\s*/gi, '');
+                                    // If text is too short or generic, fallback to symptoms
+                                    if (text.length < 5 || text.includes('Level')) {
+                                        if (p.symptoms && p.symptoms.length > 0) return `Based on symptoms: ${p.symptoms.join(', ')}`;
+                                    }
+                                    return text;
+                                })()}
                             </div>
                         </div>
 
@@ -59,11 +68,7 @@ const QueueList = ({ patients }) => {
                                 <span className="mx-1">•</span>
                                 <span>SpO2: {p.vitals?.spo2}%</span>
                             </div>
-                            {p.status === 'Waiting' && (
-                                <button className="flex items-center space-x-1 px-3 py-1.5 bg-white border border-slate-200 rounded-md text-xs font-medium text-slate-600 hover:text-blue-600 hover:border-blue-300 transition-colors">
-                                    <span>Review</span>
-                                </button>
-                            )}
+
                         </div>
                     </div>
                 </div>

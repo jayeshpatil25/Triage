@@ -1,19 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import { Settings, Users, AlertTriangle, Zap } from 'lucide-react';
 
 const AdminDashboard = () => {
     // Mock state for mutations - in potential real app, these would trigger backend logic
     const [mutationA, setMutationA] = useState(false);
     const [mutationB, setMutationB] = useState(false);
+    const [systemHealth, setSystemHealth] = useState({ uptime: '99.9%', latency: '12ms' });
+    const [assignmentStatus, setAssignmentStatus] = useState(null);
 
-    const toggleMutationA = () => {
-        setMutationA(!mutationA);
-        // Ideally call API to enable "High Load Mode"
+    useEffect(() => {
+        // Fetch initial status
+        api.get('/patients/system/status').then(res => {
+            setMutationA(res.data.highLoad);
+            setMutationB(res.data.staffShortage);
+        });
+    }, []);
+
+    const toggleMutationA = async () => {
+        const newState = !mutationA;
+        setMutationA(newState);
+        await api.post('/patients/system/mutation', { mode: 'HighLoad', active: newState });
     };
 
-    const toggleMutationB = () => {
-        setMutationB(!mutationB);
-        // Ideally call API to enable "Staff Shortage Mode"
+    const toggleMutationB = async () => {
+        const newState = !mutationB;
+        setMutationB(newState);
+        await api.post('/patients/system/mutation', { mode: 'StaffShortage', active: newState });
+    };
+
+    const triggerAssignment = async () => {
+        try {
+            setAssignmentStatus({ type: 'loading', message: 'Triggering auto-assignment...' });
+            const res = await api.post('/patients/assign');
+            if (res.data.assignments.length > 0) {
+                setAssignmentStatus({
+                    type: 'success',
+                    message: `✅ Assigned ${res.data.assignments.length} patient(s): ${res.data.assignments.map(a => `${a.patient} → ${a.doctor}`).join(', ')}`
+                });
+            } else {
+                setAssignmentStatus({ type: 'info', message: '⚠️ No assignments made (no waiting patients or no available doctors)' });
+            }
+            setTimeout(() => setAssignmentStatus(null), 5000);
+        } catch (err) {
+            setAssignmentStatus({ type: 'error', message: '❌ Assignment failed: ' + err.message });
+            setTimeout(() => setAssignmentStatus(null), 5000);
+        }
     };
 
     return (
@@ -22,6 +54,32 @@ const AdminDashboard = () => {
                 <Settings className="mr-3 text-slate-600" />
                 System Administration & Stress Testing
             </h2>
+
+            {/* Auto-Assignment Trigger */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border-2 border-blue-200">
+                <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center">
+                    <Zap className="mr-2 text-blue-600" size={20} />
+                    Manual Auto-Assignment Trigger
+                </h3>
+                <p className="text-sm text-slate-600 mb-4">
+                    Manually trigger the auto-assignment algorithm to assign waiting patients to available doctors.
+                </p>
+                <button
+                    onClick={triggerAssignment}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                >
+                    🔄 Trigger Assignment Now
+                </button>
+                {assignmentStatus && (
+                    <div className={`mt-4 p-3 rounded-lg text-sm ${assignmentStatus.type === 'success' ? 'bg-green-100 text-green-800' :
+                            assignmentStatus.type === 'error' ? 'bg-red-100 text-red-800' :
+                                assignmentStatus.type === 'loading' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                        }`}>
+                        {assignmentStatus.message}
+                    </div>
+                )}
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Mutation A Card */}

@@ -3,67 +3,78 @@
  * Combines rule-based logic (vital signs thresholds) with weighted symptom scoring.
  */
 
-const calculateTriageScore = (patient) => {
+const { spawn } = require('child_process');
+const path = require('path');
+
+const calculateTriageScore = async (patient) => {
+    return new Promise((resolve, reject) => {
+        // Prepare input for Python script
+        const inputData = JSON.stringify(patient);
+
+        // Path to python script
+        const scriptPath = path.join(__dirname, '../ml/predict.py');
+
+        // Spawn python process
+        const pythonProcess = spawn('python', [scriptPath, inputData]);
+
+        let result = '';
+        let error = '';
+
+        pythonProcess.stdout.on('data', (data) => {
+            result += data.toString();
+        });
+
+        pythonProcess.stderr.on('data', (data) => {
+            error += data.toString();
+        });
+
+        pythonProcess.on('close', (code) => {
+            if (code !== 0) {
+                console.error(`Python script exited with code ${code}: ${error}`);
+                // Fallback to basic logic if ML fails
+                resolve(fallbackLogic(patient));
+            } else {
+                try {
+                    const prediction = JSON.parse(result);
+                    if (prediction.error) {
+                        console.error("ML Error:", prediction.error);
+                        resolve(fallbackLogic(patient));
+                    } else {
+                        if (prediction.explanation) {
+                            prediction.explanation = prediction.explanation.replace('ML Model (Random Forest) Assessment: ', '');
+                        }
+                        resolve(prediction);
+                    }
+                } catch (e) {
+                    console.error("Failed to parse ML output", result);
+                    resolve(fallbackLogic(patient));
+                }
+            }
+        });
+    });
+};
+
+// Fallback Rule-based logic (original logic)
+const fallbackLogic = (patient) => {
     let score = 0;
     let explanation = [];
 
-    // 1. Symptom Severity (Simple Keyword Matching)
+    // Quick basic implementation of original logic for redundancy
     const criticalKeywords = ['chest pain', 'stroke', 'unconscious', 'severe bleeding', 'difficulty breathing'];
-    const urgentKeywords = ['broken bone', 'high fever', 'abdominal pain', 'vomiting'];
+    const symptoms = (patient.symptoms || []).map(s => s.toLowerCase());
 
-    const symptoms = patient.symptoms.map(s => s.toLowerCase());
-
-    let symptomScore = 0;
-    criticalKeywords.forEach(k => {
-        if (symptoms.some(s => s.includes(k))) {
-            symptomScore += 50;
-            explanation.push(`Critical symptom detected: ${k}`);
-        }
-    });
-
-    urgentKeywords.forEach(k => {
-        if (symptoms.some(s => s.includes(k))) {
-            symptomScore += 20;
-            explanation.push(`Urgent symptom detected: ${k}`);
-        }
-    });
-
-    score += symptomScore;
-
-    // 2. Vitals Analysis
-    // Temperature
-    if (patient.vitals.temperature >= 39.5) {
-        score += 15;
-        explanation.push('High Fever (>39.5C)');
-    } else if (patient.vitals.temperature >= 38) {
-        score += 5;
+    if (criticalKeywords.some(k => symptoms.some(s => s.includes(k)))) {
+        score += 50;
+        explanation.push('Critical symptom (Fallback)');
     }
 
-    // SpO2
-    if (patient.vitals.spo2 && patient.vitals.spo2 < 90) {
-        score += 40;
-        explanation.push('Critical Low SpO2 (<90%)');
-    } else if (patient.vitals.spo2 && patient.vitals.spo2 < 95) {
-        score += 10;
-        explanation.push('Low SpO2 (<95%)');
-    }
+    if (patient.vitals?.temperature > 39) score += 10;
 
-    // 3. Age Factors
-    if (patient.age < 5) {
-        score += 5;
-        explanation.push('Pediatric patient bonus');
-    } else if (patient.age > 70) {
-        score += 10;
-        explanation.push('Geriatric patient bonus');
-    }
-
-    // Determine Priority Level
     let level = 'Routine';
     if (score >= 50) level = 'Critical';
-    else if (score >= 25) level = 'Urgent';
-    else if (score >= 10) level = 'Semi-Urgent';
+    else if (score >= 20) level = 'Urgent';
 
-    return { score, level, explanation: explanation.join('; ') };
+    return { score, level, explanation: explanation.join('; ') + " (Rule-based Fallback)" };
 };
 
 module.exports = { calculateTriageScore };

@@ -7,7 +7,7 @@ const Intake = () => {
         name: '',
         age: '',
         gender: 'Male',
-        symptoms: '',
+        symptoms: [],
         temperature: '',
         spo2: '',
         bp: ''
@@ -26,7 +26,7 @@ const Intake = () => {
                 name: formData.name,
                 age: Number(formData.age),
                 gender: formData.gender,
-                symptoms: formData.symptoms.split(',').map(s => s.trim()),
+                symptoms: formData.symptoms,
                 vitals: {
                     temperature: Number(formData.temperature),
                     spo2: Number(formData.spo2),
@@ -37,7 +37,7 @@ const Intake = () => {
             await api.post('/patients/intake', payload);
             setMessage({ type: 'success', text: 'Patient registered successfully!' });
             setFormData({
-                name: '', age: '', gender: 'Male', symptoms: '', temperature: '', spo2: '', bp: ''
+                name: '', age: '', gender: 'Male', symptoms: [], temperature: '', spo2: '', bp: ''
             });
         } catch (err) {
             setMessage({ type: 'error', text: 'Failed to register patient.' });
@@ -110,15 +110,32 @@ const Intake = () => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-600 mb-1">Symptoms (comma separated)</label>
-                    <textarea
-                        name="symptoms"
-                        required
-                        value={formData.symptoms}
-                        onChange={handleChange}
-                        className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none"
-                        placeholder="Ex: chest pain, high fever, shivering"
-                    />
+                    <label className="block text-sm font-medium text-slate-600 mb-2">Symptoms</label>
+                    <div className="grid grid-cols-2 gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg max-h-48 overflow-y-auto">
+                        {[
+                            'Chest Pain', 'Difficulty Breathing', 'Severe Bleeding', 'Unconscious', 'Stroke Symptoms',
+                            'High Fever', 'Abdominal Pain', 'Vomiting', 'Broken Bone',
+                            'Headache', 'Dizziness', 'Cough', 'Sore Throat', 'Fatigue'
+                        ].map((symptom) => (
+                            <label key={symptom} className="flex items-center space-x-2 cursor-pointer hover:bg-slate-100 p-1 rounded">
+                                <input
+                                    type="checkbox"
+                                    checked={formData.symptoms.includes(symptom)}
+                                    onChange={(e) => {
+                                        const { checked } = e.target;
+                                        setFormData(prev => ({
+                                            ...prev,
+                                            symptoms: checked
+                                                ? [...prev.symptoms, symptom]
+                                                : prev.symptoms.filter(s => s !== symptom)
+                                        }));
+                                    }}
+                                    className="w-4 h-4 text-blue-600 rounded border-slate-300 focus:ring-blue-500"
+                                />
+                                <span className="text-sm text-slate-700">{symptom}</span>
+                            </label>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-6">

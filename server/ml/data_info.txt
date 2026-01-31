@@ -1,0 +1,16 @@
+Columns:
+Patient Id
+Patient Admission Date
+Patient First Inital
+Patient Last Name
+Patient Gender
+Patient Age
+Patient Race
+Department Referral
+Patient Admission Flag
+Patient Satisfaction Score
+Patient Waittime
+Patients CM
+
+First Row:
+{'Patient Id': '145-39-5406', 'Patient Admission Date': '20-03-2024 08:47', 'Patient First Inital': 'H', 'Patient Last Name': 'Glasspool', 'Patient Gender': 'M', 'Patient Age': 69, 'Patient Race': 'White', 'Department Referral': nan, 'Patient Admission Flag': False, 'Patient Satisfaction Score': 10.0, 'Patient Waittime': 39, 'Patients CM': 0}

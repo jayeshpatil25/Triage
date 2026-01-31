@@ -41,4 +41,14 @@ router.patch('/:id/status', async (req, res) => {
     }
 });
 
+// GET /api/staff/:id - Get specific staff member with current patient
+router.get('/:id', async (req, res) => {
+    try {
+        const staff = await Staff.findById(req.params.id).populate('currentPatient');
+        res.json(staff);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;

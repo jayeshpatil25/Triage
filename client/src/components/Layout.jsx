@@ -7,7 +7,7 @@ const Layout = ({ children }) => {
 
     const navItems = [
         { path: '/', label: 'Doctor View', icon: <Activity size={20} /> },
-        { path: '/nurse', label: 'Nurse View', icon: <Users size={20} /> },
+        { path: '/reception', label: 'Reception Desk', icon: <Users size={20} /> },
         { path: '/intake', label: 'Patient Intake', icon: <UserPlus size={20} /> },
         { path: '/admin', label: 'Admin & Mutations', icon: <Settings size={20} /> },
     ];
@@ -31,8 +31,8 @@ const Layout = ({ children }) => {
                                 key={item.path}
                                 to={item.path}
                                 className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50'
-                                        : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50'
+                                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                                     }`}
                             >
                                 {item.icon}

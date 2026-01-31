@@ -17,56 +17,23 @@ const seedData = async () => {
         await Patient.deleteMany({});
         await Staff.deleteMany({});
 
-        const patients = [
-            {
-                name: 'John Doe',
-                age: 45,
-                gender: 'Male',
-                symptoms: ['mild fever', 'cough'],
-                vitals: { temperature: 37.8, spo2: 98, bloodPressure: '120/80' },
-                triageScore: 10,
-                priorityLevel: 'Routine',
-                explanation: 'Mild fever',
-                status: 'Waiting',
-                arrivalTime: new Date(Date.now() - 1000 * 60 * 30) // 30 mins ago
-            },
-            {
-                name: 'Alice Smith',
-                age: 62,
-                gender: 'Female',
-                symptoms: ['chest pain', 'shortness of breath'],
-                vitals: { temperature: 36.5, spo2: 88, bloodPressure: '160/95' },
-                triageScore: 85,
-                priorityLevel: 'Critical',
-                explanation: 'Critical symptom: chest pain; Low SpO2 (<90%)',
-                status: 'Waiting',
-                arrivalTime: new Date(Date.now() - 1000 * 60 * 5) // 5 mins ago
-            },
-            {
-                name: 'Bob Jones',
-                age: 28,
-                gender: 'Male',
-                symptoms: ['broken bone', 'severe pain'],
-                vitals: { temperature: 37.0, spo2: 99, bloodPressure: '130/85' },
-                triageScore: 30,
-                priorityLevel: 'Urgent',
-                explanation: 'Urgent: broken bone',
-                status: 'Waiting',
-                arrivalTime: new Date(Date.now() - 1000 * 60 * 15) // 15 mins ago
-            }
-        ];
-
-        await Patient.insertMany(patients);
+        // Start with NO patients - they will be added via UI to test auto-assignment
+        console.log('Starting with empty patient queue for testing');
 
         const staff = [
-            { name: 'Dr. Emily Stone', role: 'Doctor', status: 'Available' },
-            { name: 'Dr. Mark House', role: 'Doctor', status: 'Busy' },
+            { name: 'Dr. Emily Stone', role: 'Doctor', status: 'Available', specialization: ['Cardiology', 'Chest Pain', 'Stroke Symptoms'] },
+            { name: 'Dr. Mark House', role: 'Doctor', status: 'Available', specialization: ['General Medicine', 'Fever', 'Headache'] },
+            { name: 'Dr. Sarah Williams', role: 'Doctor', status: 'Available', specialization: ['Orthopedics', 'Broken Bone', 'Fracture'] },
             { name: 'Nurse Joy', role: 'Nurse', status: 'Available' }
         ];
 
         await Staff.insertMany(staff);
 
-        console.log('Data seeded successfully');
+        console.log('✅ Data seeded successfully');
+        console.log('👨‍⚕️ 3 doctors available');
+        console.log('🏥 0 patients waiting');
+        console.log('📝 Ready to test auto-assignment via Patient Intake');
+
         process.exit();
     } catch (err) {
         console.error(err);
